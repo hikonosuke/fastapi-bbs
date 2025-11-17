@@ -1,6 +1,6 @@
 📘 FastAPI BBS — 掲示板アプリ開発テンプレート
 
-このリポジトリは、Web応用演習III（FastAPI） の授業で使用する
+このリポジトリは、Web応用演習II（FastAPI） の授業で使用する
 掲示板アプリ（BBS：Bulletin Board System） のテンプレートです。
 
 学生はこのリポジトリを clone して、自分の GitHub に push した上で開発を進めます。
