@@ -1,21 +1,49 @@
-from fastapi import APIRouter,Depends, HTTPException, Request
+# =====================
+# Standard Library
+# =====================
+import os
+
+# =====================
+# Third Party
+# =====================
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    Request,
+    Form,
+    File,
+    UploadFile,
+)
+from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.templating import Jinja2Templates
+
+from sqlalchemy import (
+    select,
+    insert,
+    func,
+    case,
+    distinct,
+    or_,
+)
+from sqlalchemy.orm import Session, aliased
+
+from faker import Faker
+fake = Faker("ja_JP")
+
+# =====================
+# Local Application
+# =====================
+from app.database import get_db
 from app.models.thread import Thread
 from app.models.post import Post
-
 from app.schemas.thread import ThreadResponse, ThreadCreate
-from app.database import get_db
-from sqlalchemy.orm import Session
-from sqlalchemy import select, insert,func,case,distinct,or_
+from app.services.file_upload import save_image_file
 
 router = APIRouter(
     prefix="/threads",
     tags=["Threads"]
 )
-
-from fastapi import Request
-from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
-from sqlalchemy.orm import aliased
 
 templates = Jinja2Templates(directory="app/templates")
 
@@ -300,15 +328,6 @@ async def new_thread_page(request: Request):
 # -----------------------------------
 # フロント側処理 スレッドの新規作成
 # -----------------------------------
-from fastapi import Form, File, UploadFile, Request
-from fastapi.responses import RedirectResponse
-from sqlalchemy import insert, select
-from sqlalchemy.orm import Session
-from app.models.thread import Thread
-from app.models.post import Post
-from app.database import get_db
-import os
-
 UPLOAD_DIR = "app/static/uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
@@ -327,18 +346,15 @@ async def create_thread_front(
     db.commit()
     new_thread_id = result.lastrowid
 
-    # (1.5)添付ファイル処理
+    # (1.5)添付ファイル処理　servicesに共通化した
     attachment_filename = None
-    if image and image.filename:
-        # ファイル名の決定
-        _,ext = os.path.splitext(image.filename)
-        filename = f"thread{new_thread_id}_post1{ext}"
-        save_path = os.path.join(UPLOAD_DIR,filename)
 
-        # 保存
-        with open(save_path,"wb") as f:
-            f.write(await image.read())
-        attachment_filename = filename
+    if image and image.filename:
+        _, ext = os.path.splitext(image.filename)
+        attachment_filename = await save_image_file(
+            image=image,
+            filename=f"thread{new_thread_id}_post1{ext}"
+        )
 
 
     # (2) Post（本文）作成
@@ -478,9 +494,6 @@ async def create_thread(thread: ThreadCreate,db: Session = Depends(get_db)):
 # ダミー投稿作成
 # POST /threads/gen_dummy_threads
 # -----------------------
-from faker import Faker
-fake = Faker("ja_JP")   # 日本語のデータを生成
-
 @router.post("/gen_dummy_threads")
 def generate_dummy_threads(
     count: int = 100,               # ← デフォルト100件

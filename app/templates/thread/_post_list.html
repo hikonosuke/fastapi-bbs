@@ -11,6 +11,10 @@
             style="max-width: 300px; border: 1px solid #ccc;">
     </div>
     {% endif %}
+    {% if not search_mode %}
+        <p><a class="repost" onclick="repost_no(1,{{first_post.thread_id}})">返信</a></p>
+    {% endif %}
+
 </div>
 <hr>
 {% endif %}
@@ -24,8 +28,7 @@
         >>{{ post.parent_post_number }}
     {% endif %}
 
-    {{ post.content }}<br>
-    <small>日時：{{ post.created_at }}</small>
+    <pre>{{ post.content }}<small>日時：{{ post.created_at }}</small></pre>
 
     {% if post.attachment %}
     <div class="attachment">
@@ -35,7 +38,7 @@
     {% endif %}
 
     {% if not search_mode %}
-        <a onclick="repost_no({{ post.post_number }},{{ post.id }})">返信</a>
+        <p><a class="repost" onclick="repost_no({{ post.post_number }},{{ post.id }})">返信</a></p>
     {% endif %}
 </div>
 <hr>
